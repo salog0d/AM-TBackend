@@ -52,7 +52,7 @@ class Test(models.Model):
     )
     
     name = models.CharField(max_length=100)
-    category = models.ForeignKey(max_length=100, choices=CATEGORIES)
+    category = models.CharField(max_length=100, choices=CATEGORIES)
     description = models.TextField()
     unit = models.CharField(max_length=20, choices=UNIT_CHOICES)
     higher_is_better = models.BooleanField(default=True, help_text="¿Un valor más alto representa un mejor resultado?")

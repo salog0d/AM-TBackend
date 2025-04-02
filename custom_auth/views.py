@@ -1,6 +1,6 @@
 import json
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import JsonResponse
+from django.http import JsonResponse
 
 from custom_auth.models import CustomUser
 

@@ -15,7 +15,7 @@ The views include:
 
 """
 @login_required(login_url='custom_auth/login/')  # Ensure the user is logged in before accessing this view
-def admin_dashboard(request):
+def adminDashboard(request):
     """
     Render the admin dashboard.
 
@@ -50,7 +50,7 @@ def admin_dashboard(request):
 
 # Dashboard to see athletes associated with a coach
 @login_required(login_url='custom_auth/login/')  # Ensure the user is logged in before accessing this view
-def coach_dashboard(request, custom_user_id):
+def coachDashboard(request, custom_user_id):
     """
     Render the coach dashboard.
 
@@ -86,7 +86,7 @@ def coach_dashboard(request, custom_user_id):
 
 
 #Athlete
-def athlete_dashboard(request, custom_user_id):
+def athleteDashboard(request, custom_user_id):
     """
     Render the athlete dashboard.
     This view retrieves the details of a specific athlete.
@@ -134,7 +134,7 @@ The views include:
 """
 
 @login_required(login_url='custom_auth/login/')  # Ensure the user is logged in before accessing this view
-def user_details(request, custom_user_id):
+def userDetails(request, custom_user_id):
     """
     Render the user details.
 
@@ -177,7 +177,7 @@ def user_details(request, custom_user_id):
     
 
 @login_required(login_url='custom_auth/login/') 
-def athlethe_details(request, custom_user_id):
+def athleteDetails(request, custom_user_id):
     """"
     Render the athlete details.
     This view retrieves the details of a specific athlete based on their ID.
@@ -225,7 +225,7 @@ The views include:
 """
 
 @login_required(login_url='custom_auth/login/')  # Ensure the user is logged in before accessing this view
-def test_results(request, custom_user_id):
+def testResults(request, custom_user_id):
     """
     Render the test results for a specific athlete.
 
@@ -263,15 +263,4 @@ def test_results(request, custom_user_id):
     return JsonResponse({
         'status': 'success',
         'test_results': test_results
-    })
-
-def edit_profile():
-    """
-    Render the edit profile page.
-    This view allows users to edit their profile information.
-    It ensures that the requesting user is authenticated and has the appropriate role.
-    """
-    return JsonResponse({
-        'status': 'error',
-        'message': 'No permission to view this page'
     })

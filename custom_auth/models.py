@@ -77,7 +77,6 @@ class CustomUser(AbstractUser):
     discipline = models.CharField(max_length=100, choices=DISCIPLINE_CHOICES)
     date_of_birth = models.DateField(blank=True, null=True)
     phone_number = models.CharField(max_length=15, blank=True)
-    email = models.EmailField(unique=True)
     coach = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, 
                              related_name='athletes', limit_choices_to={'role': 'coach'})
     
