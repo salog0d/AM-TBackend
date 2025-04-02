@@ -6,7 +6,7 @@ from custom_auth.models import CustomUser
 
 #Create User
 @login_required(login_url='custom_auth/login/')
-def create_User(request):
+def createUser(request):
     """
 View to handle the creation of a new user.
 
@@ -75,7 +75,7 @@ Notes:
 
 #Delete User
 @login_required(login_url='custom_auth/login/')
-def delete_User(request, custom_user_id):
+def deleteUser(request, custom_user_id):
     """
 Deletes a user from the system based on the provided user ID.
 
@@ -114,7 +114,7 @@ Raises:
 
 #Update User
 @login_required(login_url='custom_auth/login/')
-def update_User(request, custom_user_id):
+def updateUser(request, custom_user_id):
     """
 update_User(request, custom_user_id)
 
@@ -178,9 +178,73 @@ Notes:
         'status': 'success',
         'message': 'User updated successfully'
     })
-
 @login_required(login_url='custom_auth/login/')
-def list_users(request):
+def getUser(request, custom_user_id):
+    """
+Retrieve user details by ID.
+
+This view function retrieves the details of a specific user based on their ID.
+Access to this endpoint is restricted to superusers and admin users. If the 
+requesting user does not have the necessary permissions, an error response 
+is returned.
+
+Args:
+    request (HttpRequest): The HTTP request object.
+    custom_user_id (int): The ID of the user to retrieve.
+
+Returns:
+    JsonResponse: A JSON response containing the user's details if found, or 
+    an error message if the user does not exist or the requester lacks 
+    permissions.
+
+Raises:
+    CustomUser.DoesNotExist: If no user with the specified ID exists.
+
+Permissions:
+    - Superusers and admin users can access this endpoint.
+    - Non-superusers and non-admin users will receive a permission error.
+
+Response Structure:
+    Success:
+        {
+            'id': int,
+            'username': str,
+            'email': str,
+            'profile_picture': str or None,
+            'role': str,
+            'discipline': str,
+            'date_of_birth': str,
+            'phone_number': str
+    Error:
+        {
+            'message': str
+    """
+    if not request.user.is_superuser and not request.user.is_admin():
+        return JsonResponse({
+            'status': 'error',
+            'message': 'You do not have permission to view this page'
+        })
+    try:
+        user = CustomUser.objects.get(id=custom_user_id)
+        user_data = {
+            'id': user.id,
+            'username': user.username,
+            'email': user.email,
+            'profile_picture': user.profile_picture.url if user.profile_picture else None,
+            'role': user.role,
+            'discipline': user.discipline,
+            'date_of_birth': user.date_of_birth,
+            'phone_number': user.phone_number
+        }
+        return JsonResponse(user_data)
+    except CustomUser.DoesNotExist:
+        return JsonResponse({
+            'status': 'error',
+            'message': 'User not found'
+        })
+    
+@login_required(login_url='custom_auth/login/')
+def listUsers(request):
     """
 Handles the listing of users in JSON format.
 This view is restricted to users with administrative privileges 
@@ -212,7 +276,7 @@ Returns:
 
 #Login User
 @login_required(login_url='custom_auth/login/')
-def login_User(request):
+def loginUser(request):
     return JsonResponse({
         'status': 'success',
         'message': 'User logged in successfully'
@@ -220,7 +284,7 @@ def login_User(request):
 
 
 #Logout User
-def logout_User(request):
+def logoutUser(request):
     return JsonResponse({
         'status': 'success',
         'message': 'User logged out successfully'
@@ -228,7 +292,7 @@ def logout_User(request):
 
 
 #Change Password
-def change_Password(request):
+def changePassword(request):
     return JsonResponse({
         'status': 'success',
         'message': 'Password changed successfully'
