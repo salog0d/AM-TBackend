@@ -178,6 +178,7 @@ Notes:
         'status': 'success',
         'message': 'User updated successfully'
     })
+
 @login_required(login_url='custom_auth/login/')
 def getUser(request, custom_user_id):
     """
