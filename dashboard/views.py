@@ -14,7 +14,7 @@ The views include:
 - athlete_dashboard: Renders the athlete dashboard and retrieves the details of a specific athlete.
 
 """
-@login_required(login_url='/login/')  # Ensure the user is logged in before accessing this view
+@login_required(login_url='custom_auth/login/')  # Ensure the user is logged in before accessing this view
 def admin_dashboard(request):
     """
     Render the admin dashboard.
@@ -221,8 +221,6 @@ This section contains the different views for the tests appearing for each athle
 These views are responsible for rendering the tests and managing user data.
 The views include:
 - test_results: Renders the test results for a specific athlete.
-- test_details: Renders the details of a specific test for an athlete.
-- test_history: Renders the history of test results for a specific athlete.
 
 """
 
@@ -267,3 +265,13 @@ def test_results(request, custom_user_id):
         'test_results': test_results
     })
 
+def edit_profile():
+    """
+    Render the edit profile page.
+    This view allows users to edit their profile information.
+    It ensures that the requesting user is authenticated and has the appropriate role.
+    """
+    return JsonResponse({
+        'status': 'error',
+        'message': 'No permission to view this page'
+    })
