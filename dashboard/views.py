@@ -2,7 +2,7 @@ from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404
 from custom_auth.models import CustomUser
-
+from django.views.decorators.csrf import csrf_exempt
 """
 
 This section contains the different views for the dashboard
@@ -14,6 +14,7 @@ The views include:
 - athlete_dashboard: Renders the athlete dashboard and retrieves the details of a specific athlete.
 
 """
+@csrf_exempt
 @login_required(login_url='custom_auth/login/')  # Ensure the user is logged in before accessing this view
 def adminDashboard(request):
     """
@@ -49,6 +50,7 @@ def adminDashboard(request):
 
 
 # Dashboard to see athletes associated with a coach
+@csrf_exempt
 @login_required(login_url='custom_auth/login/')  # Ensure the user is logged in before accessing this view
 def coachDashboard(request, custom_user_id):
     """
@@ -86,6 +88,8 @@ def coachDashboard(request, custom_user_id):
 
 
 #Athlete
+@csrf_exempt
+@login_required(login_url='custom_auth/login/') 
 def athleteDashboard(request, custom_user_id):
     """
     Render the athlete dashboard.
@@ -133,7 +137,8 @@ The views include:
 
 """
 
-@login_required(login_url='custom_auth/login/')  # Ensure the user is logged in before accessing this view
+@csrf_exempt
+@login_required(login_url='custom_auth/login/') # Ensure the user is logged in before accessing this view
 def userDetails(request, custom_user_id):
     """
     Render the user details.
@@ -176,7 +181,8 @@ def userDetails(request, custom_user_id):
         }, status=403)
     
 
-@login_required(login_url='custom_auth/login/') 
+@csrf_exempt
+@login_required(login_url='custom_auth/login/')
 def athleteDetails(request, custom_user_id):
     """"
     Render the athlete details.
@@ -224,6 +230,7 @@ The views include:
 
 """
 
+@csrf_exempt
 @login_required(login_url='custom_auth/login/')  # Ensure the user is logged in before accessing this view
 def testResults(request, custom_user_id):
     """
