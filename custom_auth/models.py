@@ -79,7 +79,7 @@ class CustomUser(AbstractUser):
     phone_number = models.CharField(max_length=15, blank=True)
     coach = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, 
                              related_name='athletes', limit_choices_to={'role': 'coach'})
-    
+    """
     def clean(self):
         
         if self.role == 'athlete' and self.coach is None:
@@ -92,7 +92,7 @@ class CustomUser(AbstractUser):
         
         if self.role != 'athlete' and self.coach is not None:
             raise ValidationError('Solo los atletas pueden tener un coach asignado')
-    
+    """
     def save(self, *args, **kwargs):
         self.clean()
         super().save(*args, **kwargs)

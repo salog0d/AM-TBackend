@@ -2,6 +2,7 @@ import json
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
+from django.contrib.auth import authenticate, login, logout
 
 from custom_auth.models import CustomUser
 
@@ -76,6 +77,7 @@ Notes:
     })
 
 #Delete User
+@csrf_exempt
 @login_required(login_url='custom_auth/login/')
 def deleteUser(request, custom_user_id):
     """
@@ -110,11 +112,12 @@ Raises:
                 'message': 'User not found'
             })
     return JsonResponse({
-        'status': 'success',
-        'message': 'User deleted successfully'
+        'status': 'error',
+        'message': 'You dont have permissions'
     })
 
 #Update User
+@csrf_exempt
 @login_required(login_url='custom_auth/login/')
 def updateUser(request, custom_user_id):
     """
@@ -181,6 +184,7 @@ Notes:
         'message': 'User updated successfully'
     })
 
+@csrf_exempt
 @login_required(login_url='custom_auth/login/')
 def getUser(request, custom_user_id):
     """
@@ -246,6 +250,7 @@ Response Structure:
             'message': 'User not found'
         })
 
+@csrf_exempt
 @login_required(login_url='custom_auth/login/')
 def listUsers(request):
     """
@@ -275,12 +280,6 @@ Returns:
         "status": "error",
         "message": "You do not have permission to view this page"
     }, status=403)
-
-
-from django.contrib.auth import authenticate, login, logout
-from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse
-import json
 
 #Login User
 @csrf_exempt
@@ -342,6 +341,7 @@ def loginUser(request):
         }, status=400)
 
 #Logout User
+@csrf_exempt
 @login_required(login_url='custom_auth/login/')
 def logoutUser(request):
     """
@@ -368,6 +368,7 @@ def logoutUser(request):
     })
 
 #Change Password
+@csrf_exempt
 @login_required(login_url='custom_auth/login/')
 def changePassword(request):
     """
