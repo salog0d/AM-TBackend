@@ -7,7 +7,7 @@ urlpatterns = [
     path("updateUser/<int:custom_user_id>/", views.updateUser, name="updateUser"),
     path("getUser/<int:custom_user_id>/", views.getUser, name="getUser"),
     path("listUsers/", views.listUsers, name="listUsers"),
-    #path("loginUser/", views.loginUser, name="loginUser"),
-    #path("logoutUser/", views.logoutUser, name="logoutUser"),
-    #path("changePassword/", views.changePassword, name="changePassword"),
+    path("loginUser/", views.loginUser, name="loginUser"),
+    path("logoutUser/", views.logoutUser, name="logoutUser"),
+    path("changePassword/", views.changePassword, name="changePassword"),
 ]   

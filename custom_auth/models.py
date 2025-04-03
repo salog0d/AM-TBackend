@@ -72,7 +72,7 @@ class CustomUser(AbstractUser):
     Custom user model that extends the default Django User model.
     """
     profile_picture = models.ImageField(upload_to='profile_pictures/', blank=True, null=True)
-    role = models.CharField(max_length=10, choices=ROLE_CHOICES, default='athlete')
+    role = models.CharField(max_length=10, choices=ROLE_CHOICES, default='admin')
     name = models.CharField(max_length=100, blank=True)
     discipline = models.CharField(max_length=100, choices=DISCIPLINE_CHOICES)
     date_of_birth = models.DateField(blank=True, null=True)

@@ -1,10 +1,12 @@
 import json
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
 
 from custom_auth.models import CustomUser
 
 #Create User
+@csrf_exempt
 @login_required(login_url='custom_auth/login/')
 def createUser(request):
     """
@@ -243,7 +245,7 @@ Response Structure:
             'status': 'error',
             'message': 'User not found'
         })
-    
+
 @login_required(login_url='custom_auth/login/')
 def listUsers(request):
     """
@@ -275,26 +277,159 @@ Returns:
     }, status=403)
 
 
-#Login User
-@login_required(login_url='custom_auth/login/')
-def loginUser(request):
-    return JsonResponse({
-        'status': 'success',
-        'message': 'User logged in successfully'
-    })
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
+import json
 
+#Login User
+@csrf_exempt
+def loginUser(request):
+    """
+    Authenticates and logs in a user based on the provided credentials.
+    
+    This view processes POST requests containing user credentials (username and password)
+    and attempts to authenticate the user. If authentication is successful, the user
+    is logged in and a success response is returned. Otherwise, an error response is
+    returned.
+    
+    Args:
+        request (HttpRequest): The HTTP request object containing user credentials.
+        
+    Returns:
+        JsonResponse: A JSON response indicating the success or failure of the login attempt.
+        
+    Notes:
+        - The request method must be POST.
+        - The request body must contain 'username' and 'password' fields.
+        - If authentication fails, an error message is returned.
+    """
+    if request.method != 'POST':
+        return JsonResponse({
+            'status': 'error',
+            'message': 'Invalid request method'
+        })
+        
+    try:
+        data = json.loads(request.body)
+        username = data['username']
+        password = data['password']
+        
+        user = authenticate(request, username=username, password=password)
+        
+        if user is not None:
+            login(request, user)
+            return JsonResponse({
+                'status': 'success',
+                'message': 'User logged in successfully',
+                'user_id': user.id
+            })
+        else:
+            return JsonResponse({
+                'status': 'error',
+                'message': 'Invalid username or password'
+            }, status=401)
+            
+    except KeyError as e:
+        return JsonResponse({
+            'status': 'error',
+            'message': f'Missing field: {str(e)}'
+        }, status=400)
+    except json.JSONDecodeError:
+        return JsonResponse({
+            'status': 'error',
+            'message': 'Invalid JSON in request body'
+        }, status=400)
 
 #Logout User
+@login_required(login_url='custom_auth/login/')
 def logoutUser(request):
+    """
+    Logs out the currently authenticated user.
+    
+    This view handles user logout requests. If the user is authenticated,
+    they are logged out of the system. The view returns a success response
+    regardless of whether a user was actually logged in.
+    
+    Args:
+        request (HttpRequest): The HTTP request object.
+        
+    Returns:
+        JsonResponse: A JSON response indicating the success of the logout operation.
+        
+    Notes:
+        - The @login_required decorator ensures that only authenticated users can access this view.
+        - If an unauthenticated user attempts to access this view, they are redirected to the login page.
+    """
+    logout(request)
     return JsonResponse({
         'status': 'success',
         'message': 'User logged out successfully'
     })
 
-
 #Change Password
+@login_required(login_url='custom_auth/login/')
 def changePassword(request):
-    return JsonResponse({
-        'status': 'success',
-        'message': 'Password changed successfully'
-    })
+    """
+    Changes the password for the currently authenticated user.
+    
+    This view processes POST requests containing the current password and a new password.
+    It verifies that the current password is correct before updating to the new password.
+    
+    Args:
+        request (HttpRequest): The HTTP request object containing password data.
+        
+    Returns:
+        JsonResponse: A JSON response indicating the success or failure of the password change.
+        
+    Raises:
+        KeyError: If any required field is missing from the request data.
+        
+    Notes:
+        - The @login_required decorator ensures that only authenticated users can access this view.
+        - The request method must be POST.
+        - The request body must contain 'current_password' and 'new_password' fields.
+        - The current password is verified before changing to the new password.
+        - If the current password is incorrect, an error response is returned.
+    """
+    if request.method != 'POST':
+        return JsonResponse({
+            'status': 'error',
+            'message': 'Invalid request method'
+        })
+        
+    try:
+        data = json.loads(request.body)
+        current_password = data['current_password']
+        new_password = data['new_password']
+        
+        # Verify current password
+        user = request.user
+        if not user.check_password(current_password):
+            return JsonResponse({
+                'status': 'error',
+                'message': 'Current password is incorrect'
+            }, status=400)
+            
+        # Set and hash the new password
+        user.set_password(new_password)
+        user.save()
+        
+        # Re-authenticate the user with the new password
+        login(request, user)
+        
+        return JsonResponse({
+            'status': 'success',
+            'message': 'Password changed successfully'
+        })
+        
+    except KeyError as e:
+        return JsonResponse({
+            'status': 'error',
+            'message': f'Missing field: {str(e)}'
+        }, status=400)
+    except json.JSONDecodeError:
+        return JsonResponse({
+            'status': 'error',
+            'message': 'Invalid JSON in request body'
+        }, status=400)
