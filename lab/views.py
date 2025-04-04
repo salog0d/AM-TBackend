@@ -2,8 +2,10 @@ import json
 from django.http import  JsonResponse
 from django.contrib.auth.decorators import login_required
 from lab.models import Test
+from django.views.decorators.csrf import csrf_exempt
 
 # All views here ar just for the admin user type
+@csrf_exempt
 @login_required(login_url='custom_user/login/')
 def createTest(request):
     """
@@ -51,8 +53,45 @@ Raises:
     except json.JSONDecodeError:
         return JsonResponse({"error": "Invalid JSON data"}, status=400)
 
+@csrf_exempt
+@login_required(login_url='custom_user/login/')
+def viewTests(request):
+    """
+This view function retrieves and returns a list of all tests in the database.
+It ensures that only superusers or users with admin privileges can access
+the test list.
+Parameters:
+    request (HttpRequest): The HTTP request object containing metadata about the request.
+Returns:        
+    JsonResponse:
+        - If the user is authorized: A JSON response containing a list of all tests with a status code of 200.
+        - If the user lacks the necessary permissions: A JSON response with an error message and a status code of 403.
+Raises:
+    None
+Notes:  
+    - The user must be logged in to access this view. If not logged in, they will be redirected
+      to the login page specified by `login_url`.
+    - The `Test` model is queried to fetch the list of tests. Ensure the model is properly defined
+      and imported.
+"""
+    if request.user.is_superuser or request.user.is_admin():
+        tests = Test.objects.all()
+        test_list = []
+        for test in tests:
+            test_data = {
+                "id": test.id,
+                "name": test.name,
+                "description": test.description,
+                "unit": test.unit,
+                "category": test.category,
+                "higher_is_better": test.higher_is_better,
+            }
+            test_list.append(test_data)
+        return JsonResponse({"tests": test_list}, status=200)
 
+    return JsonResponse({"error": "No permission to view tests"}, status=403)
 
+@csrf_exempt
 @login_required(login_url='custom_user/login/')
 def deleteTest(request, test_id):
     """
@@ -80,7 +119,7 @@ Permissions:
         
         return JsonResponse({"error": "No permission to delete test"}, status=403)
 
-
+@csrf_exempt
 @login_required(login_url='custom_user/login/')
 def updateTest(request, test_id):
     """
@@ -135,7 +174,7 @@ def updateTest(request, test_id):
     except json.JSONDecodeError:
         return JsonResponse({"error": "Invalid JSON data"}, status=400)
     
-
+@csrf_exempt
 @login_required(login_url='custom_user/login/')
 def viewTest(request, test_id):
     """
@@ -165,9 +204,8 @@ Notes:
       and imported.
 """
     if request.user.is_superuser or request.user.is_admin():
-        test = Test.objects.filter(id=test_id)
-        if test.exists():
-            # Render the test details or return as JSON
+        try:
+            test = Test.objects.get(id=test_id)
             test_data = {
                 "id": test.id,
                 "name": test.name,
@@ -177,7 +215,7 @@ Notes:
                 "higher_is_better": test.higher_is_better,
             }
             return JsonResponse({"test": test_data}, status=200)
-        else:
+        except Test.DoesNotExist:
             return JsonResponse({"error": "Test not found"}, status=404)
 
     return JsonResponse({"error": "No permission to view test"}, status=403)
