@@ -159,11 +159,3 @@ ALLOWED_HOSTS = ['yourdomain.com']
 2. Create a feature branch
 3. Implement your changes
 4. Submit a pull request
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## Contact
-
-For any questions or support, please contact [your-email@example.com](mailto:your-email@example.com)
