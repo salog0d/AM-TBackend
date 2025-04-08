@@ -37,10 +37,11 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    "rest_framework",
     #Personal modules
-    "custom_auth",
-    "lab",
-    "dashboard",
+    "apps.custom_auth",
+    "apps.lab",
+    "apps.dashboard",
 ]
 
 MIDDLEWARE = [
@@ -53,6 +54,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+CORS_ALLOW_ALL_ORIGINS = True
 ROOT_URLCONF = 'athletes_tracking.urls'
 
 TEMPLATES = [
