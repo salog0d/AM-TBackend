@@ -1,0 +1,100 @@
+# Django #
+*.log
+*.pot
+*.pyc
+__pycache__/
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+media/
+*.sqlite3
+
+# Python #
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environment #
+venv/
+ENV/
+env/
+.env
+.env.example
+
+# IDE specific files #
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+.~lock.*
+*.bak
+*.tmp
+*.sublime*
+
+# Unit test / coverage reports #
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+
+# Sensitive information #
+*.pem
+*.key
+secrets.json
+.secret_key
+athletes_tracking/settings.py
+
+# Backup files #
+*.bak
+*.gho
+*.ori
+*.orig
+*.tmp
+
+# Python Installer logs #
+pip-log.txt
+pip-delete-this-directory.txt
+
+# OS specific #
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Django migrations (optional, include if you want) #
+# */migrations/*.py
+# !*/migrations/__init__.py
+
+# Profile pictures uploaded by users #
+profile_pictures/
+
+# Local configuration #
+.python-version
