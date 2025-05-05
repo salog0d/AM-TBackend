@@ -2,8 +2,7 @@ from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
-import json
-
+from rest_framework.authtoken.models import Token
 from django.contrib.auth import authenticate, login, logout
 
 
@@ -149,7 +148,7 @@ def listUsers(request):
 @permission_classes([AllowAny])
 def loginUser(request):
     """
-    Autentica y conecta a un usuario basado en las credenciales proporcionadas.
+    Authenticate a user and return an auth token.
     """
     serializer = UserLoginSerializer(data=request.data)
     if serializer.is_valid():
@@ -159,11 +158,17 @@ def loginUser(request):
         user = authenticate(request, username=username, password=password)
         
         if user is not None:
-            login(request, user)
+            # Create or get a token
+            token, created = Token.objects.get_or_create(user=user)
+            
+            # Return the token
             return Response({
                 'status': 'success',
                 'message': 'Usuario conectado correctamente',
-                'user_id': user.id
+                'token': token.key,
+                'user_id': user.id,
+                'username': user.username,
+                'role': user.role
             })
         else:
             return Response({
@@ -180,13 +185,20 @@ def loginUser(request):
 @permission_classes([IsAuthenticated])
 def logoutUser(request):
     """
-    Cierra la sesión del usuario autenticado actualmente.
+    Logs out the user by deleting their token.
     """
-    logout(request)
-    return Response({
-        'status': 'success',
-        'message': 'Usuario desconectado correctamente'
-    })
+    try:
+        # Delete the user's token
+        request.user.auth_token.delete()
+        return Response({
+            'status': 'success',
+            'message': 'Usuario desconectado correctamente'
+        })
+    except Exception as e:
+        return Response({
+            'status': 'error',
+            'message': f'Error al cerrar sesión: {str(e)}'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
