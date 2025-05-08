@@ -2,50 +2,43 @@ from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
-from rest_framework.authtoken.models import Token
-from django.contrib.auth import authenticate, login, logout
-
-
+from rest_framework.views import APIView
 from apps.custom_auth.models import CustomUser
-from .serializers import CustomUserSerializer, UserLoginSerializer
+from django.contrib.auth import authenticate
+from .serializers import CustomUserSerializer
+from rest_framework import generics, permissions
+from rest_framework.authtoken.models import Token
 
-def is_admin(user):
-    """
-    Función auxiliar para comprobar si un usuario es administrador o superusuario.
-    """
-    return user.is_superuser or user.is_admin()
 
-@api_view(['POST'])
-@permission_classes([IsAuthenticated])
-def createUser(request):
-    """
-    Crea un nuevo usuario.
-    
-    Esta vista está restringida a superusuarios y usuarios administradores.
-    """
-    if not is_admin(request.user):
-        return Response({
-            'status': 'error',
-            'message': 'No tienes permiso para crear un usuario'
-        }, status=status.HTTP_403_FORBIDDEN)
-    
-    serializer = CustomUserSerializer(data=request.data)
-    if serializer.is_valid():
-        serializer.save()
-        return Response({
-            'status': 'success',
-            'message': 'Usuario creado correctamente'
-        }, status=status.HTTP_201_CREATED)
-    
-    return Response({
-        'status': 'error',
-        'message': serializer.errors
-    }, status=status.HTTP_400_BAD_REQUEST)
+
+def is_admin():
+    pass
+
+
+class UserLoginView(APIView):
+    permission_classes = [AllowAny]
+    def post(self, request):
+        user = authenticate(username=request.data['username'], password=request.data['password'])
+        if user:
+            token, created = Token.objects.get_or_create(user=user)
+            return Response({'token': token.key})
+        else:
+            return Response({'error': 'Invalid credentials'}, status=401)
+        
+
+class UserRegistrationView(generics.CreateAPIView):
+    serializer_class = CustomUserSerializer
+    permission_classes = [permissions.IsAdminUser]
+
+
 
 @api_view(['DELETE'])
 @permission_classes([IsAuthenticated])
 def deleteUser(request, custom_user_id):
-    """
+    """from rest_framework.authtoken.models import Token
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework.authentication import TokenAuthentication
     Elimina un usuario del sistema basado en el ID proporcionado.
     
     Esta vista está restringida a superusuarios o usuarios con privilegios de administrador.
@@ -144,42 +137,6 @@ def listUsers(request):
         "message": "No tienes permiso para ver esta página"
     }, status=status.HTTP_403_FORBIDDEN)
 
-@api_view(['POST'])
-@permission_classes([AllowAny])
-def loginUser(request):
-    """
-    Authenticate a user and return an auth token.
-    """
-    serializer = UserLoginSerializer(data=request.data)
-    if serializer.is_valid():
-        username = serializer.validated_data['username']
-        password = serializer.validated_data['password']
-        
-        user = authenticate(request, username=username, password=password)
-        
-        if user is not None:
-            # Create or get a token
-            token, created = Token.objects.get_or_create(user=user)
-            
-            # Return the token
-            return Response({
-                'status': 'success',
-                'message': 'Usuario conectado correctamente',
-                'token': token.key,
-                'user_id': user.id,
-                'username': user.username,
-                'role': user.role
-            })
-        else:
-            return Response({
-                'status': 'error',
-                'message': 'Nombre de usuario o contraseña inválidos'
-            }, status=status.HTTP_401_UNAUTHORIZED)
-    
-    return Response({
-        'status': 'error',
-        'message': serializer.errors
-    }, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])

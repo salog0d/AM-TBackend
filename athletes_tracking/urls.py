@@ -23,5 +23,4 @@ urlpatterns = [
     path("dashboard/", include("apps.dashboard.urls")),
     path("lab/", include("apps.lab.urls")),
     path("custom_auth/", include("apps.custom_auth.urls")),
-    path('api-token-auth/', auth_views.obtain_auth_token, name='api-token-auth'),
 ]

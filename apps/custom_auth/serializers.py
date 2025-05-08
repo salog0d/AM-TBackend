@@ -6,7 +6,7 @@ class CustomUserSerializer(serializers.ModelSerializer):
     Serializer para el modelo CustomUser.
     Gestiona la serialización y deserialización de instancias de CustomUser.
     """
-    password = serializers.CharField(write_only=True, required=False)
+    password = serializers.CharField(write_only=True)
     
     class Meta:
         model = CustomUser
@@ -18,10 +18,13 @@ class CustomUserSerializer(serializers.ModelSerializer):
         Crea y devuelve un nuevo usuario con contraseña cifrada.
         """
         password = validated_data.pop('password', None)
-        user = CustomUser.objects.create(**validated_data)
-        if password:
-            user.set_password(password)
-            user.save()
+        # Use create_user instead of create to properly handle password hashing
+        user = CustomUser.objects.create_user(
+            username=validated_data.pop('username'),
+            email=validated_data.pop('email', ''),
+            password=password,
+            **validated_data
+        )
         return user
     
     def update(self, instance, validated_data):
@@ -40,10 +43,3 @@ class CustomUserSerializer(serializers.ModelSerializer):
         
         instance.save()
         return instance
-
-class UserLoginSerializer(serializers.Serializer):
-    """
-    Serializer para validar las credenciales de inicio de sesión.
-    """
-    username = serializers.CharField(required=True)
-    password = serializers.CharField(required=True, write_only=True)
