@@ -1,2 +1,8 @@
-#Dependencies
-Django==5.1.7
+asgiref==3.8.1
+Django==5.2
+django-cors-headers==4.7.0
+django-rest==0.8.7
+djangorestframework==3.16.0
+pillow==11.1.0
+six==1.17.0
+sqlparse==0.5.3

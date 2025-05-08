@@ -1,5 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
+from django.core.exceptions import ValidationError
+
 
 # Create your models here.
 class CustomUser(AbstractUser):
@@ -73,37 +75,47 @@ class CustomUser(AbstractUser):
     profile_picture = models.ImageField(upload_to='profile_pictures/', blank=True, null=True)
     role = models.CharField(max_length=10, choices=ROLE_CHOICES, default='admin')
     name = models.CharField(max_length=100, blank=True)
+    username = models.CharField(max_length=150, unique=True)
     discipline = models.CharField(max_length=100, choices=DISCIPLINE_CHOICES)
     date_of_birth = models.DateField(blank=True, null=True)
     phone_number = models.CharField(max_length=15, blank=True)
-    coach = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, 
-                             related_name='athletes', limit_choices_to={'role': 'coach'})
-    """
-    def clean(self):
-        
-        if self.role == 'athlete' and self.coach is None:
-            raise ValidationError('Un atleta debe tener un coach asignado')
-        
-        
-        if self.coach and self.coach.role != 'coach':
-            raise ValidationError('El usuario asignado como coach debe tener el rol de coach')
-        
-        
-        if self.role != 'athlete' and self.coach is not None:
-            raise ValidationError('Solo los atletas pueden tener un coach asignado')
-    """
-    def save(self, *args, **kwargs):
+    active = models.BooleanField(default=True)
+    coach = models.ForeignKey(
+        'self',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='athletes',
+        limit_choices_to={'role': 'coach'}
+    )
+
+
+def clean(self):
+    if self.role == 'athlete' and self.coach is None:
+        raise ValidationError('Un atleta debe tener un coach asignado')
+    
+    if self.coach and self.coach.role != 'coach':
+        raise ValidationError('El usuario asignado como coach debe tener el rol de coach')
+    
+    if self.role != 'athlete' and self.coach is not None:
+        raise ValidationError('Solo los atletas pueden tener un coach asignado')
+    
+    if self.role == 'coach' and self.coach is not None:
+        raise ValidationError('Un coach no puede tener asignado otro coach')
+
+
+def save(self, *args, **kwargs):
         self.clean()
         super().save(*args, **kwargs)
     
-    def is_athlete(self):
+def is_athlete(self):
         return self.role == 'athlete'
     
-    def is_coach(self):
+def is_coach(self):
         return self.role == 'coach'
     
-    def is_admin(self):
+def is_admin(self):
         return self.role == 'admin'
     
-    def __str__(self):
+def __str__(self):
         return self.name

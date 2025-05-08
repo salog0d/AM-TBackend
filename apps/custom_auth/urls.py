@@ -9,5 +9,5 @@ urlpatterns = [
     path('list/', views.listUsers, name='list_users'),
     path('login/', views.loginUser, name='login_user'),
     path('logout/', views.logoutUser, name='logout_user'),
-    path('change-password/', views.changePassword, name='change_password'),
+    
 ]

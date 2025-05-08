@@ -200,39 +200,3 @@ def logoutUser(request):
             'message': f'Error al cerrar sesión: {str(e)}'
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-@api_view(['POST'])
-@permission_classes([IsAuthenticated])
-def changePassword(request):
-    """
-    Cambia la contraseña del usuario autenticado actualmente.
-    """
-    try:
-        data = request.data
-        current_password = data['current_password']
-        new_password = data['new_password']
-        
-        # Verificar contraseña actual
-        user = request.user
-        if not user.check_password(current_password):
-            return Response({
-                'status': 'error',
-                'message': 'La contraseña actual es incorrecta'
-            }, status=status.HTTP_400_BAD_REQUEST)
-        
-        # Establecer y cifrar la nueva contraseña
-        user.set_password(new_password)
-        user.save()
-        
-        # Volver a autenticar al usuario con la nueva contraseña
-        login(request, user)
-        
-        return Response({
-            'status': 'success',
-            'message': 'Contraseña cambiada correctamente'
-        })
-    
-    except KeyError as e:
-        return Response({
-            'status': 'error',
-            'message': f'Campo faltante: {str(e)}'
-        }, status=status.HTTP_400_BAD_REQUEST)
