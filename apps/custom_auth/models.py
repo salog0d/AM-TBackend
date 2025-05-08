@@ -79,7 +79,6 @@ class CustomUser(AbstractUser):
     discipline = models.CharField(max_length=100, choices=DISCIPLINE_CHOICES)
     date_of_birth = models.DateField(blank=True, null=True)
     phone_number = models.CharField(max_length=15, blank=True)
-    active = models.BooleanField(default=True)
     coach = models.ForeignKey(
         'self',
         on_delete=models.SET_NULL,

@@ -1,44 +1,62 @@
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from apps.custom_auth.models import CustomUser
 from django.contrib.auth import authenticate
-from .serializers import CustomUserSerializer
+from .serializers import CustomUserSerializer, CustomTokenObtainPairSerializer, UserRegisterSerializer
 from rest_framework import generics, permissions
-from rest_framework.authtoken.models import Token
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from rest_framework_simplejwt.tokens import RefreshToken
+from django.contrib.auth import get_user_model
 
 
+def is_admin(user):
+    """
+    Verifica si un usuario tiene rol de administrador.
+    """
+    return user.role == 'admin' or user.is_superuser
 
-def is_admin():
-    pass
 
+class CustomTokenObtainPairView(TokenObtainPairView):
+    """
+    Vista personalizada para obtener tokens JWT.
+    """
+    serializer_class = CustomTokenObtainPairSerializer
 
-class UserLoginView(APIView):
-    permission_classes = [AllowAny]
-    def post(self, request):
-        user = authenticate(username=request.data['username'], password=request.data['password'])
-        if user:
-            token, created = Token.objects.get_or_create(user=user)
-            return Response({'token': token.key})
-        else:
-            return Response({'error': 'Invalid credentials'}, status=401)
-        
 
 class UserRegistrationView(generics.CreateAPIView):
-    serializer_class = CustomUserSerializer
-    permission_classes = [permissions.IsAdminUser]
-
+    """
+    Vista para el registro de usuarios.
+    """
+    serializer_class = UserRegisterSerializer
+    permission_classes = [IsAdminUser]
+    
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            user = serializer.save()
+            refresh = RefreshToken.for_user(user)
+            return Response({
+                'status': 'success',
+                'message': 'Usuario creado exitosamente',
+                'user': serializer.data,
+                'tokens': {
+                    'refresh': str(refresh),
+                    'access': str(refresh.access_token),
+                }
+            }, status=status.HTTP_201_CREATED)
+        return Response({
+            'status': 'error',
+            'message': serializer.errors
+        }, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['DELETE'])
 @permission_classes([IsAuthenticated])
 def deleteUser(request, custom_user_id):
-    """from rest_framework.authtoken.models import Token
-from rest_framework.response import Response
-from rest_framework.views import APIView
-from rest_framework.authentication import TokenAuthentication
+    """
     Elimina un usuario del sistema basado en el ID proporcionado.
     
     Esta vista está restringida a superusuarios o usuarios con privilegios de administrador.
@@ -61,6 +79,7 @@ from rest_framework.authentication import TokenAuthentication
             'status': 'error',
             'message': 'Usuario no encontrado'
         }, status=status.HTTP_404_NOT_FOUND)
+
 
 @api_view(['PUT', 'PATCH', 'POST'])
 @permission_classes([IsAuthenticated])
@@ -95,6 +114,7 @@ def updateUser(request, custom_user_id):
             'message': 'Usuario no encontrado'
         }, status=status.HTTP_404_NOT_FOUND)
 
+
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def getUser(request, custom_user_id):
@@ -119,6 +139,7 @@ def getUser(request, custom_user_id):
             'message': 'Usuario no encontrado'
         }, status=status.HTTP_404_NOT_FOUND)
 
+
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def listUsers(request):
@@ -142,11 +163,21 @@ def listUsers(request):
 @permission_classes([IsAuthenticated])
 def logoutUser(request):
     """
-    Logs out the user by deleting their token.
+    Cierra la sesión del usuario invalidando su token JWT.
     """
     try:
-        # Delete the user's token
-        request.user.auth_token.delete()
+        # Obtener el token de refresco
+        refresh_token = request.data.get('refresh')
+        if not refresh_token:
+            return Response({
+                'status': 'error',
+                'message': 'Se requiere el token de refresco para cerrar sesión'
+            }, status=status.HTTP_400_BAD_REQUEST)
+            
+        # Invalidar el token de refresco
+        token = RefreshToken(refresh_token)
+        token.blacklist()
+        
         return Response({
             'status': 'success',
             'message': 'Usuario desconectado correctamente'
@@ -157,3 +188,12 @@ def logoutUser(request):
             'message': f'Error al cerrar sesión: {str(e)}'
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def getUserProfile(request):
+    """
+    Obtiene el perfil del usuario autenticado actual.
+    """
+    serializer = CustomUserSerializer(request.user)
+    return Response(serializer.data)
