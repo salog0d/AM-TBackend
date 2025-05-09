@@ -47,6 +47,7 @@ class CustomUserSerializer(serializers.ModelSerializer):
         return instance
 
 
+
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     """
     Serializer personalizado para obtener tokens JWT con información adicional.

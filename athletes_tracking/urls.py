@@ -22,5 +22,7 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("dashboard/", include("apps.dashboard.urls")),
     path("lab/", include("apps.lab.urls")),
-    path("custom_auth/", include("apps.custom_auth.urls")),  
+    path("custom_auth/", include("apps.custom_auth.urls")),
+    path('token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),  
 ]

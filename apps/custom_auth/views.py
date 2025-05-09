@@ -2,15 +2,13 @@ from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
 from rest_framework.response import Response
-from rest_framework.views import APIView
 from apps.custom_auth.models import CustomUser
-from django.contrib.auth import authenticate
 from .serializers import CustomUserSerializer, CustomTokenObtainPairSerializer, UserRegisterSerializer
-from rest_framework import generics, permissions
-from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from rest_framework import generics
+from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.tokens import RefreshToken
-from django.contrib.auth import get_user_model
-
+from rest_framework.generics import GenericAPIView
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 def is_admin(user):
     """
@@ -158,36 +156,31 @@ def listUsers(request):
         "message": "No tienes permiso para ver esta página"
     }, status=status.HTTP_403_FORBIDDEN)
 
-
 @api_view(['POST'])
-@permission_classes([IsAuthenticated])
 def logoutUser(request):
     """
-    Cierra la sesión del usuario invalidando su token JWT.
+    Invalida el token de refresco del usuario actual (logout).
     """
     try:
-        # Obtener el token de refresco
-        refresh_token = request.data.get('refresh')
+        refresh_token = request.data.get("refresh")  # Usar paréntesis en lugar de corchetes
+        
         if not refresh_token:
             return Response({
                 'status': 'error',
-                'message': 'Se requiere el token de refresco para cerrar sesión'
+                'message': 'Token de refresco no proporcionado'
             }, status=status.HTTP_400_BAD_REQUEST)
             
-        # Invalidar el token de refresco
         token = RefreshToken(refresh_token)
-        token.blacklist()
-        
+        token.blacklist()     
         return Response({
             'status': 'success',
-            'message': 'Usuario desconectado correctamente'
+            'message': 'Sesión cerrada correctamente'
         })
     except Exception as e:
         return Response({
             'status': 'error',
-            'message': f'Error al cerrar sesión: {str(e)}'
-        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
+            'message': str(e)
+        }, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
