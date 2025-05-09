@@ -47,7 +47,6 @@ class CustomUserSerializer(serializers.ModelSerializer):
         return instance
 
 
-
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     """
     Serializer personalizado para obtener tokens JWT con información adicional.
@@ -62,13 +61,23 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         token['role'] = user.role
         token['discipline'] = user.discipline
         token['active'] = user.is_active
-        print(token)
-        print(user.is_active)
-      
-        print(user.role)
-        print(user.discipline)
 
         return token
+        
+    def validate(self, attrs):
+        # This method gets called during token creation
+        data = super().validate(attrs)
+        
+        # Add these fields to the response directly
+        user = self.user
+        data['user_id'] = user.id
+        data['username'] = user.username
+        data['email'] = user.email
+        data['role'] = user.role
+        data['discipline'] = user.discipline
+        data['is_active'] = user.is_active
+        
+        return data
 
 
 class UserRegisterSerializer(serializers.ModelSerializer):

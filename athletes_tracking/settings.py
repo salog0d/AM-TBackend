@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     "corsheaders",
     'rest_framework.authtoken',
     'rest_framework_simplejwt',
+    'rest_framework_simplejwt.token_blacklist',
     
     #Personal modules
     "apps.custom_auth",
