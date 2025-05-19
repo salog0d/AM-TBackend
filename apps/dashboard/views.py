@@ -62,32 +62,47 @@ def coachDashboard(request, custom_user_id):
     Esta vista recupera todos los atletas asociados a un entrenador específico.
     Asegura que el usuario solicitante esté autenticado y tenga el rol de entrenador.
     """
-    if request.user.is_authenticated and request.user.is_coach():
-        try:
-            # Recuperar el objeto de usuario entrenador basado en el ID proporcionado y rol
-            coach = get_object_or_404(CustomUser, id=custom_user_id, role='coach')
-            
-            # Obtener todos los atletas asociados con el entrenador
-            athletes = coach.athletes.all()
-            serializer = CustomUserSerializer(athletes, many=True)
-            
-            # Devolver respuesta exitosa con la lista de atletas
-            return Response({
-                'status': 'success',
-                'athletes': serializer.data
-            })
-        except CustomUser.DoesNotExist:
-            # Manejar caso donde el entrenador no existe
+    try:
+        # Verificar que el usuario autenticado sea un entrenador o un administrador
+        if request.user.role != 'coach' and request.user.role != 'admin':
             return Response({
                 'status': 'error',
-                'message': 'Entrenador no encontrado'
-            }, status=status.HTTP_404_NOT_FOUND)
-    else:
-        # Devolver error de permiso si el usuario no está autorizado para acceder a esta vista
+                'message': 'Solo los entrenadores pueden acceder a esta vista'
+            }, status=status.HTTP_403_FORBIDDEN)
+            
+        # Recuperar el objeto de usuario entrenador basado en el ID proporcionado y rol
+        coach = get_object_or_404(CustomUser, id=custom_user_id, role='coach')
+      
+        # Verificar la relación entre entrenador y atletas
+        # Suponiendo que la relación está definida como athletes = models.ManyToManyField(...) en CustomUser
+        # O como un ForeignKey desde el modelo Athlete hacia CustomUser
+        
+        # Depurar la relación
+        print(f"Coach ID: {coach.id}, Coach Username: {coach.username}")
+        print(f"Relación athletes existe: {hasattr(coach, 'athletes')}")
+        
+
+        athletes = CustomUser.objects.filter(coach= coach)
+
+        
+        print(f"Número de atletas encontrados: {athletes.count()}")
+        
+        # Serializar y devolver los atletas
+        serializer = CustomUserSerializer(athletes, many=True)
+        print("Datos serializados:", serializer.data)
+        
+        # Devolver respuesta exitosa con la lista de atletas
+        return Response({
+            'status': 'success',
+            'athletes': serializer.data
+        })
+    except Exception as e:
+        # Capturar y registrar cualquier excepción no manejada
+        print(f"Error en coachDashboard: {str(e)}")
         return Response({
             'status': 'error',
-            'message': 'No tiene permiso para ver esta página'
-        }, status=status.HTTP_403_FORBIDDEN)
+            'message': f'Error interno: {str(e)}'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @api_view(['GET'])
@@ -99,7 +114,7 @@ def athleteDashboard(request, custom_user_id):
     Esta vista recupera los detalles de un atleta específico.
     Asegura que el usuario solicitante esté autenticado y tenga el rol de atleta.
     """
-    if request.user.is_authenticated and request.user.is_athlete():
+    if request.user.is_authenticated :
         try:
             # Recuperar el objeto de usuario atleta basado en el ID proporcionado y rol
             athlete = get_object_or_404(CustomUser, id=custom_user_id, role='athlete')

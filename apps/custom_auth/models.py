@@ -5,12 +5,12 @@ from django.core.exceptions import ValidationError
 
 # Create your models here.
 class CustomUser(AbstractUser):
-
-    """"
+    """
     CustomUser Model
     This model extends Django's built-in AbstractUser to provide additional fields and functionality
     specific to the application's requirements. It introduces roles, disciplines, and other custom
     attributes for user management.
+    
     Attributes:
         ROLE_CHOICES (tuple): Defines the possible roles a user can have:
             - 'athlete': Represents an athlete.
@@ -28,20 +28,6 @@ class CustomUser(AbstractUser):
         coach (ForeignKey): A self-referential field to assign a coach to an athlete. Only users with
             the role 'coach' can be assigned as a coach. This field is optional and only applicable
             for users with the role 'athlete'.
-    Methods:
-        clean(): Validates the model's data before saving. Ensures:
-            - Athletes must have a coach assigned.
-            - The assigned coach must have the role of 'coach'.
-            - Only athletes can have a coach assigned.
-        save(*args, **kwargs): Overrides the default save method to call the clean method before saving.
-        is_athlete(): Returns True if the user's role is 'athlete'.
-        is_coach(): Returns True if the user's role is 'coach'.
-        is_admin(): Returns True if the user's role is 'admin'.
-        __str__(): Returns the user's name as the string representation of the object.
-    Usage:
-        This model is designed to handle user roles and relationships in a sports tracking
-        and monitoring application. It enforces role-based constraints and provides utility
-        methods for role identification.
     """
     
     ROLE_CHOICES = (
@@ -69,9 +55,7 @@ class CustomUser(AbstractUser):
         ('gap_training', 'GAP (Glutes, Abs, Legs)'),
         ('investigation', 'Investigation')
     )
-    """
-    Custom user model that extends the default Django User model.
-    """
+    
     profile_picture = models.ImageField(upload_to='profile_pictures/', blank=True, null=True)
     role = models.CharField(max_length=10, choices=ROLE_CHOICES, default='admin')
     name = models.CharField(max_length=100, blank=True)
@@ -88,33 +72,51 @@ class CustomUser(AbstractUser):
         limit_choices_to={'role': 'coach'}
     )
 
+    def clean(self):
+        """
+        Validates the model's data before saving. Ensures:
+            - Athletes must have a coach assigned.
+            - The assigned coach must have the role of 'coach'.
+            - Only athletes can have a coach assigned.
+        """
+        # Solo aplicamos estas validaciones si no es una creación inicial
+        if self.pk:  # Si existe una primary key, el objeto ya existe
+            if self.role == 'athlete' and self.coach is None:
+                raise ValidationError('Un atleta debe tener un coach asignado')
+            
+            if self.coach and self.coach.role != 'coach':
+                raise ValidationError('El usuario asignado como coach debe tener el rol de coach')
+            
+            if self.role != 'athlete' and self.coach is not None:
+                raise ValidationError('Solo los atletas pueden tener un coach asignado')
+            
+            if self.role == 'coach' and self.coach is not None:
+                raise ValidationError('Un coach no puede tener asignado otro coach')
 
-def clean(self):
-    if self.role == 'athlete' and self.coach is None:
-        raise ValidationError('Un atleta debe tener un coach asignado')
-    
-    if self.coach and self.coach.role != 'coach':
-        raise ValidationError('El usuario asignado como coach debe tener el rol de coach')
-    
-    if self.role != 'athlete' and self.coach is not None:
-        raise ValidationError('Solo los atletas pueden tener un coach asignado')
-    
-    if self.role == 'coach' and self.coach is not None:
-        raise ValidationError('Un coach no puede tener asignado otro coach')
-
-
-def save(self, *args, **kwargs):
-        self.clean()
+    def save(self, *args, **kwargs):
+        """
+        Overrides the default save method to call the clean method before saving.
+        """
+        try:
+            self.clean()
+        except ValidationError as e:
+            # Log or handle the error appropriately
+            print(f"Validation error: {e}")
+            raise
         super().save(*args, **kwargs)
     
-def is_athlete(self):
+    def is_athlete(self):
+        """Returns True if the user's role is 'athlete'."""
         return self.role == 'athlete'
     
-def is_coach(self):
+    def is_coach(self):
+        """Returns True if the user's role is 'coach'."""
         return self.role == 'coach'
     
-def is_admin(self):
+    def is_admin(self):
+        """Returns True if the user's role is 'admin'."""
         return self.role == 'admin'
     
-def __str__(self):
-        return self.name
+    def __str__(self):
+        """Returns the user's name as the string representation of the object."""
+        return self.name if self.name else self.username
