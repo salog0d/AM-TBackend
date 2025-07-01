@@ -80,17 +80,40 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         return data
 
 
+# Reemplaza el UserRegisterSerializer en apps/custom_auth/serializers.py
+
 class UserRegisterSerializer(serializers.ModelSerializer):
     """
     Serializer para el registro de usuarios con generación de tokens JWT.
     """
     password = serializers.CharField(write_only=True)
+    coach = serializers.PrimaryKeyRelatedField(
+        queryset=CustomUser.objects.filter(role='coach'),
+        required=False,
+        allow_null=True
+    )
     tokens = serializers.SerializerMethodField()
 
     class Meta:
         model = CustomUser
         fields = ['id', 'username', 'email', 'password', 'profile_picture',
-                  'role', 'discipline', 'date_of_birth', 'phone_number', 'tokens']
+                  'role', 'discipline', 'date_of_birth', 'phone_number', 'coach', 'tokens']
+
+    def validate(self, data):
+        """Validaciones personalizadas."""
+        role = data.get('role')
+        coach = data.get('coach')
+        
+        # Solo los atletas pueden tener coach
+        if role != 'athlete' and coach is not None:
+            raise serializers.ValidationError("Solo los atletas pueden tener un coach asignado.")
+        
+        # Si es atleta y se asigna coach, verificar que el coach tenga rol 'coach'
+        if role == 'athlete' and coach is not None:
+            if coach.role != 'coach':
+                raise serializers.ValidationError("El usuario asignado como coach debe tener el rol de coach.")
+        
+        return data
 
     def get_tokens(self, user):
         """
@@ -106,11 +129,16 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         """
         Crea un nuevo usuario con contraseña cifrada y genera tokens JWT.
         """
+        
         password = validated_data.pop('password', None)
+        coach = validated_data.get('coach', None)
+        
+        
         user = CustomUser.objects.create_user(
             username=validated_data.pop('username'),
             email=validated_data.pop('email', ''),
             password=password,
             **validated_data
         )
+
         return user

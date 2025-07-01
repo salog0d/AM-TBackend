@@ -30,8 +30,8 @@ def adminDashboard(request):
     # Verificar si el usuario está autenticado y tiene rol de administrador
     if request.user.is_authenticated and request.user.is_admin():
         try:
-            # Recuperar todos los usuarios del sistema
-            users = CustomUser.objects.all()
+            # Recuperar todos los usuarios del sistema con información del coach
+            users = CustomUser.objects.select_related('coach').all()
             serializer = CustomUserSerializer(users, many=True)
             
             # Devolver respuesta exitosa con la lista de usuarios
@@ -73,18 +73,10 @@ def coachDashboard(request, custom_user_id):
         # Recuperar el objeto de usuario entrenador basado en el ID proporcionado y rol
         coach = get_object_or_404(CustomUser, id=custom_user_id, role='coach')
       
-        # Verificar la relación entre entrenador y atletas
-        # Suponiendo que la relación está definida como athletes = models.ManyToManyField(...) en CustomUser
-        # O como un ForeignKey desde el modelo Athlete hacia CustomUser
+        # Recuperar atletas con información del coach usando select_related para optimizar
+        athletes = CustomUser.objects.select_related('coach').filter(coach=coach)
         
-        # Depurar la relación
         print(f"Coach ID: {coach.id}, Coach Username: {coach.username}")
-        print(f"Relación athletes existe: {hasattr(coach, 'athletes')}")
-        
-
-        athletes = CustomUser.objects.filter(coach= coach)
-
-        
         print(f"Número de atletas encontrados: {athletes.count()}")
         
         # Serializar y devolver los atletas
@@ -114,10 +106,15 @@ def athleteDashboard(request, custom_user_id):
     Esta vista recupera los detalles de un atleta específico.
     Asegura que el usuario solicitante esté autenticado y tenga el rol de atleta.
     """
-    if request.user.is_authenticated :
+    if request.user.is_authenticated:
         try:
             # Recuperar el objeto de usuario atleta basado en el ID proporcionado y rol
-            athlete = get_object_or_404(CustomUser, id=custom_user_id, role='athlete')
+            # Usar select_related para incluir información del coach en una sola consulta
+            athlete = get_object_or_404(
+                CustomUser.objects.select_related('coach'), 
+                id=custom_user_id, 
+                role='athlete'
+            )
             serializer = CustomUserSerializer(athlete)
             
             # Devolver respuesta exitosa con los detalles del atleta
@@ -156,7 +153,11 @@ def athleteDetails(request, custom_user_id):
     if request.user.is_authenticated and request.user.is_coach():
         try:
             # Recuperar el objeto de usuario atleta basado en el ID proporcionado y rol
-            athlete = get_object_or_404(CustomUser, id=custom_user_id, role='athlete')
+            athlete = get_object_or_404(
+                CustomUser.objects.select_related('coach'), 
+                id=custom_user_id, 
+                role='athlete'
+            )
             serializer = CustomUserSerializer(athlete)
             
             # Devolver respuesta exitosa con los detalles del atleta
@@ -221,7 +222,8 @@ def testResults(request, custom_user_id):
         }, status=status.HTTP_403_FORBIDDEN)
 
     # Recuperar y serializar los resultados de pruebas para el atleta
-    test_results = athlete.test_results.all()
+    # Usar select_related para optimizar las consultas
+    test_results = athlete.test_results.select_related('test', 'session').all()
     serializer = TestResultSerializer(test_results, many=True)
 
     # Devolver respuesta exitosa con los resultados de pruebas
